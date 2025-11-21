@@ -33,10 +33,6 @@
     </div>
     <div class="actions">
       <button id="export-btn">Ekspor JSON</button>
-      <label class="import-btn">
-        <input type="file" id="import-input" accept="application/json" />
-        <span>Impor JSON</span>
-      </label>
       <button id="clear-btn" class="danger">Bersihkan Semua</button>
     </div>
   </section>
@@ -50,7 +46,10 @@
         <option value="income">Pemasukan</option>
         <option value="expense">Pengeluaran</option>
       </select>
-      <input type="number" id="amount" placeholder="Jumlah" step="0.01" min="0" required />
+      <div class="amount-wrap">
+        <span class="prefix">Rp</span>
+        <input type="text" id="amount" placeholder="Jumlah" inputmode="numeric" autocomplete="off" required />
+      </div>
       <textarea id="note" placeholder="Kegunaan pengeluaran (opsional)"></textarea>
       <button type="submit">Tambah</button>
     </form>
