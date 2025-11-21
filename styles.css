@@ -79,6 +79,20 @@ body {
   border-radius: 6px;
   padding: 0 10px;
 }
+.amount-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.amount-wrap .prefix {
+  position: absolute;
+  left: 10px;
+  color: var(--muted);
+}
+.amount-wrap input {
+  padding-left: 32px;
+  width: 100%;
+}
 .tx-form textarea {
   background: var(--panel);
   border: 1px solid var(--border);
