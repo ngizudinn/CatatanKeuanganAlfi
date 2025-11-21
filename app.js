@@ -5,6 +5,18 @@ function formatCurrency(n) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(n);
 }
 
+function parseAmountInput(v) {
+  const s = String(v || "").trim().replace(/[^0-9,\.]/g, "");
+  const normalized = s.replace(/\./g, "").replace(/,/g, ".");
+  const num = parseFloat(normalized);
+  return Number.isFinite(num) ? num : NaN;
+}
+
+function formatAmountInputValue(n) {
+  if (!Number.isFinite(n)) return "";
+  return new Intl.NumberFormat("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
+}
+
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 }
@@ -90,11 +102,15 @@ function addRecord(e) {
   const desc = document.getElementById("desc").value.trim();
   const category = document.getElementById("category").value.trim();
   const type = document.getElementById("type").value;
-  const amount = document.getElementById("amount").value;
+  const amountStr = document.getElementById("amount").value;
   const note = document.getElementById("note") ? document.getElementById("note").value.trim() : "";
-  if (!date || !desc || !category || !type || Number(amount) < 0) return;
+  const nAmount = parseAmountInput(amountStr);
+  if (!date || !desc || !category || !type || !Number.isFinite(nAmount) || nAmount < 0) {
+    alert("Mohon isi semua field dengan benar. Jumlah harus >= 0.");
+    return;
+  }
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-  const payload = { id, date, desc, category, type, amount: Number(amount) };
+  const payload = { id, date, desc, category, type, amount: nAmount };
   if (type === "expense" && note) payload.note = note;
   records.push(payload);
   save();
@@ -118,6 +134,7 @@ function bindEvents() {
   document.getElementById("filter-year").addEventListener("change", renderList);
   const typeSel = document.getElementById("type");
   const noteField = document.getElementById("note");
+  const amountInput = document.getElementById("amount");
   function toggleNote() {
     if (!noteField) return;
     const isExpense = typeSel.value === "expense";
@@ -126,6 +143,16 @@ function bindEvents() {
   }
   typeSel.addEventListener("change", toggleNote);
   toggleNote();
+  if (amountInput) {
+    amountInput.addEventListener("input", () => {
+      const n = parseAmountInput(amountInput.value);
+      amountInput.value = Number.isFinite(n) ? formatAmountInputValue(n) : "";
+    });
+    amountInput.addEventListener("blur", () => {
+      const n = parseAmountInput(amountInput.value);
+      amountInput.value = Number.isFinite(n) ? formatAmountInputValue(n) : "";
+    });
+  }
   document.getElementById("export-btn").addEventListener("click", ()=>{
     const data = JSON.stringify(records);
     const blob = new Blob([data], { type: "application/json" });
@@ -137,28 +164,6 @@ function bindEvents() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-  });
-  document.getElementById("import-input").addEventListener("change", async (e)=>{
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const text = await file.text();
-    let parsed = [];
-    try { parsed = JSON.parse(text); } catch { parsed = []; }
-    if (!Array.isArray(parsed)) return;
-    const cleaned = parsed.map(r=>({
-      id: r.id || Date.now().toString(36) + Math.random().toString(36).slice(2,7),
-      date: r.date,
-      desc: r.desc,
-      category: r.category,
-      type: r.type === "expense" ? "expense" : "income",
-      amount: Number(r.amount) || 0,
-      note: r.note ? String(r.note) : undefined
-    })).filter(r=> r.date && r.desc && r.category && r.amount >= 0);
-    records = cleaned;
-    save();
-    populateFilters();
-    renderList();
-    e.target.value = "";
   });
   document.getElementById("clear-btn").addEventListener("click", ()=>{
     records = [];
